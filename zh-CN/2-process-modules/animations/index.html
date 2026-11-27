@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>五种半导体工艺 · 分步动画</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #183344;
+      --muted: #485f6b;
+      --line: #cbdbe1;
+      --accent: #09645c;
+      --paper: #f4f8fa;
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      line-height: 1.65;
+      color: var(--ink);
+      background: #fbfcfd;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { width: min(1200px, 100% - 56px); margin: 42px auto; }
+    h1, h2, p, figure, dl, dd { margin: 0; }
+    h1 { font-size: clamp(29px, 5vw, 50px); line-height: 1.2; letter-spacing: -.04em; }
+    header > p { color: var(--muted); margin-top: 10px; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 23px 0 15px; }
+    nav a, button { min-height: 44px; font: inherit; border-radius: 5px; }
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 15px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      background: white;
+    }
+    nav a[aria-current] { background: var(--accent); border-color: var(--accent); color: #fff; }
+    :focus-visible { outline: 3px solid #1e78b5; outline-offset: 3px; }
+    .bench { display: grid; grid-template-columns: 1.13fr 1fr; border: 1px solid var(--line); background: #fff; }
+    .visual { background: var(--paper); border-right: 1px solid var(--line); padding: 20px 22px; }
+    .visual svg { display: block; width: 100%; height: auto; }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 15px; color: var(--muted); font-size: .84rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .swatch { width: .84em; height: .84em; border-radius: 2px; border: 1px solid #243b4b66; }
+    figcaption { margin-top: 12px; color: #394f59; font-size: .9rem; }
+    .explain { padding: 23px 26px; }
+    .counter { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+    h2 { font-size: clamp(21px, 3vw, 31px); line-height: 1.32; margin: 5px 0 17px; }
+    dt { font-weight: 750; margin-top: 12px; }
+    dd { color: #304957; margin-top: 3px; }
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin: 13px 0 10px; }
+    button { padding: 6px 17px; border: 1px solid var(--line); background: white; color: var(--ink); cursor: pointer; }
+    #next { background: var(--accent); color: white; border-color: var(--accent); }
+    button:disabled, #next:disabled { background: #e7eef0; color: #536571; border-color: #d2dfe2; cursor: default; }
+    .keyboard { color: var(--muted); font-size: .88rem; margin-left: auto; }
+    footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; margin-top: 18px; padding-top: 13px; }
+    footer a { color: var(--accent); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .play { animation: appear 230ms ease-out both; }
+    .play .reveal, .play .heat { animation: appear 480ms ease-out both; }
+    .play .travel { animation: travel 470ms ease-out both; }
+    .play .lift { animation: lift 560ms ease-out both; }
+    .play .spread { animation: spread 490ms ease-out both; transform-box: fill-box; transform-origin: center; }
+    .play .fill-up { animation: fill-up 540ms ease-out both; }
+    .play .trace { stroke-dasharray: 1000; animation: trace 600ms ease-out both; }
+    @keyframes appear { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes travel { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes lift { 0% { opacity: .85; transform: translateY(22px); } 70% { opacity: .95; } 100% { opacity: 0; transform: translateY(-15px); } }
+    @keyframes spread { from { transform: scaleX(.06); opacity: .45; } to { transform: scaleX(1); opacity: 1; } }
+    @keyframes fill-up { from { clip-path: inset(75% 0 0); } to { clip-path: inset(0); } }
+    @keyframes trace { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+    @media (max-width: 740px) {
+      main { width: calc(100% - 28px); margin: 23px auto; }
+      .bench { grid-template-columns: 1fr; }
+      .visual { padding: 10px 13px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .explain { padding: 17px; }
+      .keyboard { display: none; }
+      nav { gap: 6px; margin-top: 17px; }
+      nav a { padding-inline: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>五种半导体工艺</h1>
+    <p>选择一种工艺。每点击一次「下一步」，就看一次加工变化。</p>
+  </header>
+  <nav aria-label="选择工艺" id="processes"></nav>
+  <noscript>请启用 JavaScript。也可以回到原书章节，逐项展开图解。</noscript>
+  <div id="reader" hidden>
+    <div class="bench">
+      <figure class="visual">
+        <div id="diagram" aria-hidden="true"></div>
+        <div class="legend" id="legend" aria-label="材料图例"></div>
+        <figcaption id="caption"></figcaption>
+      </figure>
+      <section class="explain" aria-labelledby="step-title">
+        <p id="counter" class="counter"></p>
+        <h2 id="step-title"></h2>
+        <dl>
+          <dt>这一步做什么</dt>
+          <dd id="what"></dd>
+          <dt>为什么做</dt>
+          <dd id="why"></dd>
+        </dl>
+      </section>
+    </div>
+    <div class="controls">
+      <button type="button" id="prev">上一步</button>
+      <button type="button" id="next">下一步</button>
+      <button type="button" id="reset">回到第一步</button>
+      <span class="keyboard">也可以用键盘 ← / →</span>
+    </div>
+    <div id="announcement" class="sr-only" role="status"></div>
+    <footer>
+      <p id="intro"></p>
+      <p>教学剖面，材料厚度和形状均作示意。<a id="chapter">读原书章节</a> · <a id="reference">参考资料</a></p>
+      <p>根据《半导体制造概论》作者与贡献者的内容绘制，沿用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>。</p>
+    </footer>
+  </div>
+</main>
+<script type="application/json" id="book-data">{
+  "processes": [
+    {
+      "id": "lithography",
+      "chapter": "04-lithography",
+      "name": "光刻",
+      "intro": "把设计图形转到光刻胶上。这个例子使用正胶和透射式曝光的示意光路。",
+      "legend": [
+        "silicon",
+        "film",
+        "resist",
+        "exposed"
+      ],
+      "ref": [
+        "ASML 芯片制造流程",
+        "https://www.asml.com/en/company/stories/2021/semiconductor-manufacturing-process-steps"
+      ],
+      "steps": [
+        {
+          "title": "准备表面",
+          "what": "处理已经铺好目标薄膜的表面，去除会影响涂胶的残留。",
+          "why": "油污、颗粒或水分可能让光刻胶铺不匀，或者在后续步骤里脱落。",
+          "caption": "先看到灰色硅基底和蓝色目标薄膜。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "旋涂光刻胶",
+          "what": "在晶圆上滴胶并旋转，让感光材料摊成一层薄膜。",
+          "why": "后面要用光在这层胶里写下图形，胶层厚薄一致有助于图形尺寸稳定。",
+          "caption": "蓝色目标膜上多了一整层黄色胶。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"366\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"spread\"/>\u003c/svg>"
+        },
+        {
+          "title": "软烘",
+          "what": "受控加热涂好的光刻胶，让部分溶剂蒸发。",
+          "why": "让胶层稳定下来，便于后续对准和曝光。",
+          "caption": "橙色波纹表示加热，胶层依旧连续。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"366\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M190 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M230 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M270 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M310 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "对准",
+          "what": "让掩模版上的本层图形对齐晶圆上已有的定位标记。",
+          "why": "后续接触孔需要落在下层的正确位置。即使孔径正确，位置偏了也可能接不上。",
+          "caption": "虚线连接上下两组对准标记。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"366\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"109\" y=\"36\" width=\"90\" height=\"12\" fill=\"#243b4b\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"36\" width=\"90\" height=\"12\" fill=\"#243b4b\" rx=\"2\" class=\"\"/>\u003cpath d=\"M132 30V193m-9-17h18\" fill=\"none\" stroke=\"#913c4d\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"5 6\"/>\u003cpath d=\"M367 30V193m-9-17h18\" fill=\"none\" stroke=\"#913c4d\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"5 6\"/>\u003c/svg>"
+        },
+        {
+          "title": "曝光",
+          "what": "把掩模版的图形投到胶上，改变受光区域的化学性质。",
+          "why": "显影液随后就能区分受光和未受光的地方。",
+          "caption": "中间一段胶变色，仍然没有开口。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"366\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"109\" y=\"36\" width=\"90\" height=\"12\" fill=\"#243b4b\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"36\" width=\"90\" height=\"12\" fill=\"#243b4b\" rx=\"2\" class=\"\"/>\u003crect x=\"199\" y=\"106\" width=\"102\" height=\"24\" fill=\"#bd7031\" rx=\"2\" class=\"reveal\"/>\u003cpath d=\"M214 53V98m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#a66b16\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M238 53V98m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#a66b16\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M262 53V98m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#a66b16\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M286 53V98m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#a66b16\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "曝光后烘烤",
+          "what": "按所用胶的要求加热，推进曝光触发的化学反应。",
+          "why": "有些胶需要这一步才能形成稳定的溶解差异，便于控制显影后的形状。",
+          "caption": "受光区保持标记。是否使用这一步取决于胶的体系。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"366\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M190 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M230 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M270 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M310 87c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003crect x=\"199\" y=\"106\" width=\"102\" height=\"24\" fill=\"#bd7031\" rx=\"2\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "显影",
+          "what": "用显影液去掉更容易溶解的胶。图中的正胶在受光区被去掉。",
+          "why": "露出下一道工艺要加工的区域，并让剩下的胶保护其他地方。",
+          "caption": "黄色胶中间出现开口，下面的蓝膜依然连续。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003ccircle cx=\"224\" cy=\"82\" r=\"5\" fill=\"#e5ad39\" class=\"lift\"/>\u003ccircle cx=\"248\" cy=\"72\" r=\"6\" fill=\"#e5ad39\" class=\"lift\"/>\u003ccircle cx=\"276\" cy=\"84\" r=\"4\" fill=\"#e5ad39\" class=\"lift\"/>\u003c/svg>"
+        },
+        {
+          "title": "检查胶图形",
+          "what": "检查开口宽度、与下层的位置偏差以及图形缺陷。",
+          "why": "在刻蚀或注入改变晶圆之前发现问题，便于评估能否返工。",
+          "caption": "两端带箭头的尺寸线指向胶开口。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M199 89H301m-8-5 8 5-8 5 M207 84l-8 5 8 5\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        }
+      ],
+      "chapterUrl": "https://github.com/lsj-168/Semiconductor_Manufacturing_Introduction-zh_CN/blob/master/zh-CN/2-process-modules/04-lithography/README.md"
+    },
+    {
+      "id": "etching",
+      "chapter": "06-etching",
+      "name": "刻蚀",
+      "intro": "利用胶上的开口，在蓝色薄膜中真正去掉材料。以一次定向等离子体刻蚀为例。",
+      "legend": [
+        "silicon",
+        "film",
+        "resist"
+      ],
+      "ref": [
+        "Applied Materials 材料图形化",
+        "https://www.appliedmaterials.com/us/en/semiconductor/products/shape.html"
+      ],
+      "steps": [
+        {
+          "title": "接收光刻胶图形",
+          "what": "把已经显影的晶圆送进刻蚀设备。黄色胶挡住需要保留的区域。",
+          "why": "开口先决定从哪里加工，使设备能在一整片膜上只处理指定位置。",
+          "caption": "胶有开口，下面的蓝膜还是完整的一层。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"366\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "开始刻蚀",
+          "what": "用等离子体中的活性粒子和有方向的离子作用于开口下方。",
+          "why": "化学反应有助于移走材料，离子方向性有助于让沟槽主要向下变深。",
+          "caption": "箭头朝下，蓝膜中出现浅槽。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"199\" y=\"145\" width=\"102\" height=\"15\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M224 62V123m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M250 62V123m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M276 62V123m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "判断终点",
+          "what": "监测刻蚀信号，判断目标层是否已去除到指定界面，再按需要补一点刻蚀。",
+          "why": "各处的去除速度可能略有差别。刻得太少会残留，太多会伤到下层。",
+          "caption": "开口底部到达蓝膜和灰色基底的交界。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"106\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M224 62V148m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M250 62V148m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M276 62V148m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M199 160H301\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"5 5\"/>\u003c/svg>"
+        },
+        {
+          "title": "去胶并清洗",
+          "what": "去除临时光刻胶，再清理加工留下的残留物。",
+          "why": "残胶和副产物会影响后续沉积、电连接或检测。",
+          "caption": "黄色胶消失，蓝膜中的开口留下。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003ccircle cx=\"115\" cy=\"86\" r=\"5\" fill=\"#e5ad39\" class=\"lift\"/>\u003ccircle cx=\"157\" cy=\"76\" r=\"5\" fill=\"#e5ad39\" class=\"lift\"/>\u003ccircle cx=\"352\" cy=\"84\" r=\"5\" fill=\"#e5ad39\" class=\"lift\"/>\u003ccircle cx=\"385\" cy=\"72\" r=\"5\" fill=\"#e5ad39\" class=\"lift\"/>\u003c/svg>"
+        },
+        {
+          "title": "检查转移结果",
+          "what": "量开口宽度和深度，检查侧壁、残留与下层损伤。",
+          "why": "刻蚀可能改变尺寸和轮廓，检查实际结构才能判断这一步是否做好。",
+          "caption": "尺寸线跨在蓝膜开口上，虚线指示要检查的侧壁。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"130\" width=\"132\" height=\"30\" fill=\"#3879b4\" rx=\"2\" class=\"\"/>\u003cpath d=\"M199 111H301m-8-5 8 5-8 5 M207 106l-8 5 8 5\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"none\"/>\u003cpath d=\"M199 117V167 M301 117V167\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"3 4\"/>\u003c/svg>"
+        }
+      ],
+      "chapterUrl": "https://github.com/lsj-168/Semiconductor_Manufacturing_Introduction-zh_CN/blob/master/zh-CN/2-process-modules/06-etching/README.md"
+    },
+    {
+      "id": "implantation",
+      "chapter": "07-ion-implantation",
+      "name": "离子注入",
+      "intro": "让少量指定元素进入硅中，改变局部电学性质。退火再帮助修复晶格并激活掺杂。",
+      "legend": [
+        "silicon",
+        "resist",
+        "dopant"
+      ],
+      "ref": [
+        "ASML 芯片制造流程",
+        "https://www.asml.com/en/company/stories/2021/semiconductor-manufacturing-process-steps"
+      ],
+      "steps": [
+        {
+          "title": "用掩模限定区域",
+          "what": "在要改变电学性质的位置留出开口，用遮挡层护住其他区域。",
+          "why": "同一片晶圆上有许多器件，只有设计指定的位置需要这次掺杂。",
+          "caption": "黄色遮挡层中间露出硅表面。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"136\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"136\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "产生并筛选离子",
+          "what": "把原料变成带电粒子，再用质量分析选出所需离子。",
+          "why": "带电粒子可以用电场加速。选对元素才能得到预期的掺杂效果。",
+          "caption": "三种粒子的路径分开，蓝绿色粒子进入后续通道。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"136\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"136\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M84 66Q166 66 205 47T345 34\" fill=\"none\" stroke=\"#b86150\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"none\"/>\u003cpath d=\"M84 66H379\" fill=\"none\" stroke=\"#087d76\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"none\"/>\u003cpath d=\"M84 66Q166 66 205 85T345 99\" fill=\"none\" stroke=\"#67659a\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"none\"/>\u003crect x=\"350\" y=\"52\" width=\"25\" height=\"28\" fill=\"none\" rx=\"2\" class=\"\"/>\u003cpath d=\"M350 53H380V80H350Z\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "加速并扫过晶圆",
+          "what": "让选出的离子达到所需能量，再用离子束与晶圆的相对运动覆盖目标区域。",
+          "why": "能量影响离子进入多深，剂量控制单位面积打进去多少，扫描让分布更均匀。",
+          "caption": "离子从开口进入硅中，形成一片分散的掺杂区。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"136\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003crect x=\"301\" y=\"136\" width=\"132\" height=\"24\" fill=\"#e5ad39\" rx=\"2\" class=\"\"/>\u003cpath d=\"M213 68V178m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#087d76\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M237 68V178m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#087d76\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M263 68V178m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#087d76\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M287 68V178m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#087d76\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003ccircle cx=\"207\" cy=\"178\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"218\" cy=\"190\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"224\" cy=\"181\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"233\" cy=\"197\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"238\" cy=\"186\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"251\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"253\" cy=\"188\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"256\" cy=\"199\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"268\" cy=\"181\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"272\" cy=\"190\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"282\" cy=\"199\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"284\" cy=\"179\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"296\" cy=\"188\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003c/svg>"
+        },
+        {
+          "title": "去除临时遮挡层",
+          "what": "本例用光刻胶遮挡。注入后去掉胶并清理表面。",
+          "why": "这层胶的任务已经完成，后续热处理需要合适的晶圆表面。",
+          "caption": "黄色胶移除。青色掺杂原子仍然留在硅中。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003ccircle cx=\"207\" cy=\"178\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"218\" cy=\"190\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"224\" cy=\"181\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"233\" cy=\"197\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"238\" cy=\"186\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"251\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"253\" cy=\"188\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"256\" cy=\"199\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"268\" cy=\"181\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"272\" cy=\"190\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"282\" cy=\"199\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"284\" cy=\"179\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"296\" cy=\"188\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "退火修复并激活",
+          "what": "受控加热硅，让被撞乱的晶格恢复，并让一部分掺杂原子进入能发挥电学作用的位置。",
+          "why": "离子打进去就完成了材料引入。还要经过激活，才能获得所需电学特性。",
+          "caption": "热波纹亮起，青色原子标出待激活或已激活的掺杂区。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003ccircle cx=\"207\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"218\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"224\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"233\" cy=\"192\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"238\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"251\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"253\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"256\" cy=\"192\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"268\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"272\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"282\" cy=\"192\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"284\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003ccircle cx=\"296\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"reveal\"/>\u003cpath d=\"M190 137c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M230 137c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M270 137c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M310 137c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "验证电学结果",
+          "what": "在控片或测试结构上量电阻等指标，再结合器件要求判断。",
+          "why": "束流参数记录能说明设备跑过什么条件。电学数据能说明硅最终变成了什么样。",
+          "caption": "探针在掺杂区上方接触表面。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003ccircle cx=\"207\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"218\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"224\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"233\" cy=\"192\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"238\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"251\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"253\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"256\" cy=\"192\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"268\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"272\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"282\" cy=\"192\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"284\" cy=\"176\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003ccircle cx=\"296\" cy=\"184\" r=\"4.3\" fill=\"#087d76\" class=\"\"/>\u003cpath d=\"M122 92l27 29 34 39 M165 92l27 29 34 39 M335 92l-27 29-34 39 M378 92l-27 29-34 39\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        }
+      ],
+      "chapterUrl": "https://github.com/lsj-168/Semiconductor_Manufacturing_Introduction-zh_CN/blob/master/zh-CN/2-process-modules/07-ion-implantation/README.md"
+    },
+    {
+      "id": "cmp",
+      "chapter": "08-cmp",
+      "name": "CMP",
+      "intro": "CMP 是化学机械抛光，也叫化学机械整平。本例把起伏的绝缘层磨平。",
+      "legend": [
+        "silicon",
+        "dielectric",
+        "pad",
+        "slurry"
+      ],
+      "ref": [
+        "Applied Materials 材料图形化",
+        "https://www.appliedmaterials.com/us/en/semiconductor/products/shape.html"
+      ],
+      "steps": [
+        {
+          "title": "看清要整平的表面",
+          "what": "确认绝缘薄膜的起伏和目标剩余厚度。",
+          "why": "下一次薄膜加工或光刻需要较平的表面，也要留够仍有功能的材料。",
+          "caption": "薄膜上有两个凸起，虚线是示意的目标高度。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"132\" width=\"366\" height=\"28\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M59 132H441\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"6 6\"/>\u003crect x=\"98\" y=\"77\" width=\"130\" height=\"55\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"307\" y=\"77\" width=\"89\" height=\"55\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "让晶圆接触抛光垫",
+          "what": "抛光头把晶圆正面压向抛光垫，抛光液进入接触面。",
+          "why": "抛光液参与表面反应，垫和磨粒在相对运动中提供机械去除。",
+          "caption": "设备示意里晶圆翻面向下，黄色抛光液进入接触区。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"105\" y=\"45\" width=\"275\" height=\"48\" fill=\"#243b4b\" rx=\"2\" class=\"\"/>\u003crect x=\"144\" y=\"94\" width=\"198\" height=\"22\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"144\" y=\"117\" width=\"198\" height=\"13\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"65\" y=\"130\" width=\"358\" height=\"30\" fill=\"#66699c\" rx=\"2\" class=\"\"/>\u003crect x=\"65\" y=\"160\" width=\"358\" height=\"28\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003cpath d=\"M243 13V40m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M415 63l-48 49\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003ccircle cx=\"347\" cy=\"126\" r=\"5\" fill=\"#d39b24\" class=\"travel\"/>\u003ccircle cx=\"364\" cy=\"125\" r=\"5\" fill=\"#d39b24\" class=\"travel\"/>\u003ccircle cx=\"333\" cy=\"129\" r=\"5\" fill=\"#d39b24\" class=\"travel\"/>\u003cpath d=\"M100 156H393m-11-5 11 5-11 5\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "去除凸起",
+          "what": "保持受控的压力和相对运动，使高处逐渐降低。",
+          "why": "减小高低差，让后续图形更容易聚焦，也减少剩余厚度差异。",
+          "caption": "剖面恢复同一观察方向，凸起比之前低。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"132\" width=\"366\" height=\"28\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M59 132H441\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"6 6\"/>\u003crect x=\"98\" y=\"109\" width=\"130\" height=\"23\" fill=\"#9fcac1\" rx=\"2\" class=\"reveal\"/>\u003crect x=\"307\" y=\"109\" width=\"89\" height=\"23\" fill=\"#9fcac1\" rx=\"2\" class=\"reveal\"/>\u003cpath d=\"M127 55V94m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M190 55V94m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M330 55V94m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003cpath d=\"M370 55V94m-6-7 6 7 6-7\" fill=\"none\" stroke=\"#146c75\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "到达目标并停磨",
+          "what": "用终点信号或厚度控制判断何时停止抛光。",
+          "why": "继续磨会消耗原本要留下的材料，还可能造成局部凹陷。",
+          "caption": "绝缘层接近虚线高度，表面达到示意的平坦状态。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"132\" width=\"366\" height=\"28\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M59 132H441\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"6 6\"/>\u003c/svg>"
+        },
+        {
+          "title": "清洗并复测",
+          "what": "去掉抛光液和磨粒残留，再检查厚度、平坦度和表面缺陷。",
+          "why": "残留会成为后续缺陷，复测能确认各测点的结果。",
+          "caption": "抛光残留被移走，图中三个位置代表抽样测点。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"160\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"132\" width=\"366\" height=\"28\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M59 132H441\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"6 6\"/>\u003cpath d=\"M124 96v30\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003ccircle cx=\"124\" cy=\"132\" r=\"4\" fill=\"#243b4b\" class=\"\"/>\u003cpath d=\"M250 96v30\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003ccircle cx=\"250\" cy=\"132\" r=\"4\" fill=\"#243b4b\" class=\"\"/>\u003cpath d=\"M376 96v30\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"travel\" stroke-dasharray=\"none\"/>\u003ccircle cx=\"376\" cy=\"132\" r=\"4\" fill=\"#243b4b\" class=\"\"/>\u003c/svg>"
+        }
+      ],
+      "chapterUrl": "https://github.com/lsj-168/Semiconductor_Manufacturing_Introduction-zh_CN/blob/master/zh-CN/2-process-modules/08-cmp/README.md"
+    },
+    {
+      "id": "copper",
+      "chapter": "10-metallization",
+      "name": "铜互连",
+      "intro": "经典铜双大马士革路线。先在绝缘材料里做孔和槽，再把铜填进去。",
+      "legend": [
+        "silicon",
+        "dielectric",
+        "barrier",
+        "seed",
+        "copper",
+        "cap"
+      ],
+      "ref": [
+        "IBM 铜大马士革互连研究",
+        "https://research.ibm.com/publications/extendibility-of-cu-damascene-to-01-mm-wide-interconnections"
+      ],
+      "steps": [
+        {
+          "title": "铺层间绝缘材料",
+          "what": "在已有下层铜线的上方形成一层绝缘材料。",
+          "why": "不同层的导线要彼此隔开，只有指定位置需要导通。",
+          "caption": "青灰色绝缘层盖住了下面的铜线。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003c/svg>"
+        },
+        {
+          "title": "刻通孔和线槽",
+          "what": "用光刻和刻蚀做出窄的通孔与宽的线槽，让通孔底部露出下层线。",
+          "why": "通孔决定上下层在哪里连接，线槽决定上层导线往哪个方向走。",
+          "caption": "上宽下窄的孔槽露出下层铜线的一部分。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "铺阻挡层",
+          "what": "沿孔槽内壁形成薄的阻挡层。",
+          "why": "铜会向周围材料扩散。阻挡层能减少这种扩散，帮助保护绝缘结构。",
+          "caption": "紫色薄层沿着孔槽轮廓连续覆盖。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M151 67V103H229V150H271V103H349V67\" fill=\"none\" stroke=\"#66548e\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"trace\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "铺铜种子层",
+          "what": "再铺一层很薄的铜，作为电镀开始时的导电表面。",
+          "why": "电镀需要连续的导电路径，铜才能在孔槽内多个位置均匀长起来。",
+          "caption": "紫色阻挡层内侧多了一道浅橙色铜层。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M151 67V103H229V150H271V103H349V67\" fill=\"none\" stroke=\"#66548e\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M156 67V98H234V145H266V98H344V67\" fill=\"none\" stroke=\"#f1b76d\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"trace\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "电镀填铜",
+          "what": "利用电化学反应把孔槽填实，并在表面留一层待去除的铜。",
+          "why": "孔槽内部必须连通。留下空洞会减小有效导电面积，也可能降低可靠性。",
+          "caption": "孔槽被铜填满，表面也盖着一整层铜。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M151 67V103H229V150H271V103H349V67\" fill=\"none\" stroke=\"#66548e\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M156 67V98H234V145H266V98H344V67\" fill=\"none\" stroke=\"#f1b76d\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M159 67H341V96H263V143H237V96H159Z\" fill=\"#bb6135\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"fill-up\" stroke-dasharray=\"none\"/>\u003crect x=\"67\" y=\"52\" width=\"366\" height=\"15\" fill=\"#bb6135\" rx=\"2\" class=\"spread\"/>\u003c/svg>"
+        },
+        {
+          "title": "铜退火",
+          "what": "通过受控加热，让刚电镀的铜膜调整并稳定其晶粒结构。",
+          "why": "铜的微观结构会影响导线电阻和稳定性，退火有助于得到目标膜质。",
+          "caption": "图中的波纹表示加热。铜线轮廓仍和电镀填充时一样。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M151 67V103H229V150H271V103H349V67\" fill=\"none\" stroke=\"#66548e\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M156 67V98H234V145H266V98H344V67\" fill=\"none\" stroke=\"#f1b76d\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M159 67H341V96H263V143H237V96H159Z\" fill=\"#bb6135\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003crect x=\"67\" y=\"52\" width=\"366\" height=\"15\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003cpath d=\"M190 50c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M230 50c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M270 50c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003cpath d=\"M310 50c-11-8 11-14 0-22s11-14 0-22\" fill=\"none\" stroke=\"#ba572f\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"heat\" stroke-dasharray=\"none\"/>\u003c/svg>"
+        },
+        {
+          "title": "CMP 去掉多余金属",
+          "what": "磨掉槽外表面的铜和多余阻挡层，留下孔槽内的金属。",
+          "why": "整片表面的铜会把本应分开的导线接在一起。整平后，各条线由绝缘材料隔开。",
+          "caption": "表面连续铜层消失。槽中铜线经通孔接到下层线。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M151 67V103H229V150H271V103H349V67\" fill=\"none\" stroke=\"#66548e\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M156 67V98H234V145H266V98H344V67\" fill=\"none\" stroke=\"#f1b76d\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M159 67H341V96H263V143H237V96H159Z\" fill=\"#bb6135\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003crect x=\"67\" y=\"61\" width=\"366\" height=\"6\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003cpath d=\"M61 67H439\" fill=\"none\" stroke=\"#243b4b\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"reveal\" stroke-dasharray=\"6 5\"/>\u003c/svg>"
+        },
+        {
+          "title": "加覆盖层",
+          "what": "在整平的结构上加薄覆盖层。",
+          "why": "覆盖层能保护铜表面、帮助限制铜扩散，并为后续叠层准备表面。",
+          "caption": "顶部出现一层蓝色覆盖层。互连形状保持不变。",
+          "drawing": "\u003csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 500 240\" aria-hidden=\"true\">\u003crect x=\"0\" y=\"0\" width=\"500\" height=\"240\" fill=\"#f4f8fa\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"166\" width=\"366\" height=\"56\" fill=\"#acbbc7\" rx=\"2\" class=\"\"/>\u003crect x=\"145\" y=\"150\" width=\"203\" height=\"16\" fill=\"#bb6135\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"150\" width=\"78\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"348\" y=\"150\" width=\"85\" height=\"16\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003crect x=\"67\" y=\"67\" width=\"366\" height=\"83\" fill=\"#9fcac1\" rx=\"2\" class=\"\"/>\u003cpath d=\"M151 67H349V103H271V150H229V103H151Z\" fill=\"#f4f8fa\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M151 67V103H229V150H271V103H349V67\" fill=\"none\" stroke=\"#66548e\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M156 67V98H234V145H266V98H344V67\" fill=\"none\" stroke=\"#f1b76d\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003cpath d=\"M159 67H341V96H263V143H237V96H159Z\" fill=\"#bb6135\" stroke=\"none\" stroke-width=\"0\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"\" stroke-dasharray=\"none\"/>\u003crect x=\"67\" y=\"55\" width=\"366\" height=\"12\" fill=\"#3879b4\" rx=\"2\" class=\"spread\"/>\u003c/svg>"
+        }
+      ],
+      "chapterUrl": "https://github.com/lsj-168/Semiconductor_Manufacturing_Introduction-zh_CN/blob/master/zh-CN/2-process-modules/10-metallization/README.md"
+    }
+  ],
+  "materials": {
+    "silicon": [
+      "硅基底",
+      "#acbbc7"
+    ],
+    "film": [
+      "目标薄膜",
+      "#3879b4"
+    ],
+    "resist": [
+      "光刻胶",
+      "#e5ad39"
+    ],
+    "exposed": [
+      "受光后的胶",
+      "#bd7031"
+    ],
+    "dielectric": [
+      "绝缘材料",
+      "#9fcac1"
+    ],
+    "dopant": [
+      "掺杂离子或原子",
+      "#087d76"
+    ],
+    "pad": [
+      "抛光垫",
+      "#66699c"
+    ],
+    "slurry": [
+      "抛光液",
+      "#d39b24"
+    ],
+    "barrier": [
+      "阻挡层",
+      "#66548e"
+    ],
+    "seed": [
+      "铜种子层",
+      "#f1b76d"
+    ],
+    "copper": [
+      "铜",
+      "#bb6135"
+    ],
+    "cap": [
+      "覆盖层",
+      "#3879b4"
+    ]
+  }
+}</script>
+<script>
+  "use strict";
+  const { processes, materials } = JSON.parse(document.getElementById("book-data").textContent);
+  const byId = (id) => document.getElementById(id);
+  const links = new Map();
+  let previousProcess = null;
+  let previousIndex = null;
+
+  function parseLocation() {
+    const [id, position] = location.hash.slice(1).split("/");
+    const process = processes.find((item) => item.id === id) ?? processes[0];
+    const step = /^\d+$/.test(position ?? "") ? Number(position) : 1;
+    const index = Math.max(0, Math.min(process.steps.length - 1, step - 1));
+    return { process, index };
+  }
+
+  function navigate(index) {
+    const { process } = parseLocation();
+    if (index < 0 || index >= process.steps.length) return;
+    location.hash = process.id + "/" + (index + 1);
+  }
+
+  function render() {
+    const { process, index } = parseLocation();
+    const processChanged = process !== previousProcess;
+    const stepChanged = index !== previousIndex;
+    const { title, what, why, caption, drawing } = process.steps[index];
+    if (!processChanged && !stepChanged) return;
+    const counter = `${process.name} · 第 ${index + 1} / ${process.steps.length} 步`;
+    if (processChanged) {
+      for (const [id, link] of links) {
+        if (id === process.id) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      }
+      byId("legend").replaceChildren(...process.legend.map((key) => {
+        const [name, color] = materials[key];
+        const item = document.createElement("span");
+        const swatch = document.createElement("i");
+        swatch.className = "swatch";
+        swatch.style.backgroundColor = color;
+        item.append(swatch, name);
+        return item;
+      }));
+      byId("chapter").href = process.chapterUrl;
+      byId("reference").href = process.ref[1];
+      byId("reference").textContent = process.ref[0];
+      byId("intro").textContent = process.intro;
+    }
+    byId("diagram").innerHTML = drawing;
+    if (previousProcess) byId("diagram").firstElementChild.classList.add("play");
+    for (const [id, value] of Object.entries({ counter, "step-title": title, what, why, caption })) {
+      byId(id).textContent = value;
+    }
+    const focusWasOnNext = document.activeElement === byId("next");
+    const focusWasOnPrevious = document.activeElement === byId("prev");
+    byId("prev").disabled = index === 0;
+    byId("next").disabled = index === process.steps.length - 1;
+    byId("reset").disabled = index === 0;
+    if (focusWasOnNext && byId("next").disabled) byId("prev").focus();
+    if (focusWasOnPrevious && byId("prev").disabled) byId("next").focus();
+    if (previousProcess) byId("announcement").textContent = counter + " " + title;
+    previousProcess = process;
+    previousIndex = index;
+  }
+
+  for (const process of processes) {
+    const link = document.createElement("a");
+    link.href = "#" + process.id + "/1";
+    link.textContent = process.name;
+    links.set(process.id, link);
+    byId("processes").append(link);
+  }
+  byId("prev").addEventListener("click", () => navigate(parseLocation().index - 1));
+  byId("next").addEventListener("click", () => navigate(parseLocation().index + 1));
+  byId("reset").addEventListener("click", () => {
+    navigate(0);
+    byId("next").focus();
+  });
+  window.addEventListener("hashchange", render);
+  document.addEventListener("keydown", (event) => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      navigate(parseLocation().index + (event.key === "ArrowRight" ? 1 : -1));
+    }
+  });
+  byId("reader").hidden = false;
+  render();
+</script>
+</body>
+</html>

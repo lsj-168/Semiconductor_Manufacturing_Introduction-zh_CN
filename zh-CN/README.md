@@ -56,6 +56,8 @@
 
 ## 全书地图
 
+[五种工艺的分步图解](2-process-modules/README.md#五种工艺的分步图解)包含光刻、刻蚀、离子注入、CMP 和铜互连。每一步都有剖面示意和白话讲解。
+
 ```mermaid
 flowchart LR
     S["沙子"] --> W["空白晶圆<br>第 3 章"]
