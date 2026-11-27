@@ -16,6 +16,20 @@
 | [第 9 章　清洗与污染控制](09-cleaning/README.md) | RCA 清洗、Q-Time 与交叉污染 |
 | [第 10 章　金属化](10-metallization/README.md) | 接触孔、铜的大马士革工艺与低介电常数材料 |
 
+## 五种工艺的分步图解
+
+打开章节后，每次点击一个步骤，查看对应的剖面图和「这一步做什么」「为什么做」。
+
+| 工艺 | 分步图解 |
+|---|---|
+| 光刻 | [从准备表面到检查胶图形](04-lithography/README.md#分步图解) |
+| 刻蚀 | [从胶上开口到薄膜上的结构](06-etching/README.md#分步图解) |
+| 离子注入 | [从限定注入区域到退火和验证](07-ion-implantation/README.md#分步图解) |
+| CMP | [从起伏表面到整平和复测](08-cmp/README.md#分步图解) |
+| 铜互连 | [从刻孔槽到填铜和整平](10-metallization/README.md#分步图解) |
+
+[下载交互动画 HTML](animations/index.html)。在 GitHub 文件页点击下载按钮，用浏览器打开保存的文件，即可逐步播放。
+
 ---
 
 [← 第 1 部　基础](../1-fundamentals/README.md) ｜ [目录](../README.md) ｜ [第 3 部　工艺集成 →](../3-integration/README.md)
